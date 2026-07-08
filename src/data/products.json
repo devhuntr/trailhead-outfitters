@@ -1,0 +1,62 @@
+[
+  {
+    "id": "tent-basecamp-2",
+    "name": "Basecamp 2 Tent",
+    "category": "Shelter",
+    "price": 249.99,
+    "image": "/src/images/tent-basecamp-2.jpg",
+    "description": "Lightweight two-person backpacking tent with a weatherproof rainfly.",
+    "rating": 4.6,
+    "inStock": true
+  },
+  {
+    "id": "pack-summit-45",
+    "name": "Summit 45L Backpack",
+    "category": "Packs",
+    "price": 179.0,
+    "image": "/src/images/pack-summit-45.jpg",
+    "description": "45-liter internal-frame pack sized for weekend trips.",
+    "rating": 4.8,
+    "inStock": true
+  },
+  {
+    "id": "boot-ridgeline",
+    "name": "Ridgeline Hiking Boots",
+    "category": "Footwear",
+    "price": 139.95,
+    "image": "/src/images/boot-ridgeline.jpg",
+    "description": "Waterproof mid-cut boots with aggressive grip for rocky terrain.",
+    "rating": 4.5,
+    "inStock": true
+  },
+  {
+    "id": "bag-nomad-20",
+    "name": "Nomad 20° Sleeping Bag",
+    "category": "Sleep",
+    "price": 119.99,
+    "image": "/src/images/bag-nomad-20.jpg",
+    "description": "Mummy-style down bag rated to 20°F, packs down small.",
+    "rating": 4.7,
+    "inStock": false
+  },
+  {
+    "id": "stove-trailfire",
+    "name": "Trailfire Camp Stove",
+    "category": "Cooking",
+    "price": 54.5,
+    "image": "/src/images/stove-trailfire.jpg",
+    "description": "Compact canister stove that boils a liter of water in under four minutes.",
+    "rating": 4.4,
+    "inStock": true
+  },
+  {
+    "id": "bottle-canyon-32",
+    "name": "Canyon 32oz Water Bottle",
+    "category": "Hydration",
+    "price": 24.0,
+    "image": "/src/images/bottle-canyon-32.jpg",
+    "description": "Insulated stainless bottle that keeps water cold all day.",
+    "rating": 4.9,
+    "inStock": true
+  }
+]
