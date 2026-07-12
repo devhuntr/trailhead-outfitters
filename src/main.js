@@ -1,79 +1,139 @@
 import './css/style.css'
-import { getCategories, filterByCategory } from './js/data.js'
-import { renderFilters, renderProductGrid } from './js/render.js'
-import { addToCart, getCartCount } from './js/cart.js'
+import {
+  loadProducts,
+  findProduct,
+  getCategories,
+  filterByCategory,
+} from './js/data.js'
+import {
+  renderCatalog,
+  renderDetail,
+  renderCart,
+  renderCheckout,
+  renderConfirmation,
+} from './js/render.js'
+import {
+  addToCart,
+  removeFromCart,
+  updateQty,
+  clearCart,
+  getCartCount,
+  getCartLines,
+  getSubtotal,
+} from './js/cart.js'
 
 let activeCategory = 'All'
 
-function buildPage() {
-  const categories = getCategories()
-
-  document.querySelector('#app').innerHTML = `
-    <header class="site-header">
-      <a class="logo" href="/">Trailhead Outfitters</a>
-      <nav class="site-nav">
-        <a href="/">Shop</a>
-        <a href="/">Cart (<span id="cart-count">0</span>)</a>
-      </nav>
-    </header>
-
-    <section class="hero">
-      <h1>Gear Up For The Trail</h1>
-      <p>Tested equipment for hiking, camping, and climbing.</p>
-    </section>
-
-    <main class="catalog">
-      <div class="catalog-head">
-        <h2>Shop All Gear</h2>
-        <div class="filters" id="filters">
-          ${renderFilters(categories, activeCategory)}
-        </div>
-      </div>
-      <div class="grid" id="grid"></div>
-    </main>
-
-    <footer class="site-footer">
-      <p>&copy; ${new Date().getFullYear()} Trailhead Outfitters</p>
-    </footer>
-  `
-}
+const view = document.querySelector('#view')
 
 function updateCartCount() {
   document.querySelector('#cart-count').textContent = getCartCount()
 }
 
-function updateGrid() {
-  const products = filterByCategory(activeCategory)
-  document.querySelector('#grid').innerHTML = renderProductGrid(products)
-}
+function router() {
+  const hash = window.location.hash || '#/'
 
-function handleFilterClick(event) {
-  const button = event.target.closest('.filter')
-  if (!button) return
+  if (hash.startsWith('#/product/')) {
+    const id = hash.replace('#/product/', '')
+    view.innerHTML = renderDetail(findProduct(id))
+  } else if (hash === '#/cart') {
+    view.innerHTML = renderCart(getCartLines(), getSubtotal())
+  } else if (hash === '#/checkout') {
+    view.innerHTML = renderCheckout(getCartLines(), getSubtotal())
+  } else {
+    view.innerHTML = renderCatalog(
+      filterByCategory(activeCategory),
+      getCategories(),
+      activeCategory
+    )
+  }
 
-  activeCategory = button.dataset.category
-  document.querySelectorAll('.filter').forEach((filter) => {
-    filter.classList.toggle('is-active', filter.dataset.category === activeCategory)
-  })
-  updateGrid()
-}
-
-function handleGridClick(event) {
-  const button = event.target.closest('.btn-add')
-  if (!button) return
-
-  addToCart(button.dataset.id)
+  window.scrollTo(0, 0)
   updateCartCount()
-
-  button.textContent = 'Added'
-  setTimeout(() => {
-    button.textContent = 'Add to Cart'
-  }, 900)
 }
 
-buildPage()
-updateGrid()
-updateCartCount()
+// One click listener on the view instead of one on every button, because the
+// buttons get rebuilt every time the page re-renders.
+function handleClick(event) {
+  const addButton = event.target.closest('[data-add]')
+  if (addButton) {
+    addToCart(addButton.dataset.add)
+    updateCartCount()
+    addButton.textContent = 'Added'
+    setTimeout(() => {
+      addButton.textContent = 'Add to Cart'
+    }, 900)
+    return
+  }
 
-document.querySelector('#filters').addEventListener('click', handleFilterClick)
-document.querySelector('#grid').addEventListener('click', handleGridClick)
+  const filterButton = event.target.closest('[data-category]')
+  if (filterButton) {
+    activeCategory = filterButton.dataset.category
+    router()
+    return
+  }
+
+  const stepButton = event.target.closest('[data-step]')
+  if (stepButton) {
+    updateQty(stepButton.dataset.id, Number(stepButton.dataset.step))
+    router()
+    return
+  }
+
+  const removeButton = event.target.closest('[data-remove]')
+  if (removeButton) {
+    removeFromCart(removeButton.dataset.remove)
+    router()
+  }
+}
+
+function handleSubmit(event) {
+  if (event.target.id !== 'order-form') return
+  event.preventDefault()
+
+  const form = event.target
+  const data = new FormData(form)
+  const name = data.get('name').trim()
+  const email = data.get('email').trim()
+  const address = data.get('address').trim()
+  const city = data.get('city').trim()
+  const zip = data.get('zip').trim()
+  const error = document.querySelector('#form-error')
+
+  if (!name || !email || !address || !city || !zip) {
+    error.textContent = 'Please fill out every field.'
+    return
+  }
+
+  if (!email.includes('@') || !email.includes('.')) {
+    error.textContent = 'Please enter a valid email address.'
+    return
+  }
+
+  if (!/^\d{5}$/.test(zip)) {
+    error.textContent = 'Zip code needs to be 5 numbers.'
+    return
+  }
+
+  clearCart()
+  view.innerHTML = renderConfirmation(name)
+  updateCartCount()
+}
+
+async function start() {
+  try {
+    await loadProducts()
+  } catch {
+    view.innerHTML =
+      '<div class="page"><h2>Something went wrong</h2><p>The product list could not be loaded.</p></div>'
+    return
+  }
+
+  view.addEventListener('click', handleClick)
+  view.addEventListener('submit', handleSubmit)
+  window.addEventListener('hashchange', router)
+
+  router()
+}
+
+start()
