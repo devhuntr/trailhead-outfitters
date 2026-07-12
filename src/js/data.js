@@ -1,17 +1,31 @@
-// Loads the product data and handles looking things up and filtering.
-import products from '../data/products.json'
+// Loads the product data and filters it.
+
+const DATA_URL = '/data/products.json'
+
+let products = []
+
+export async function loadProducts() {
+  const response = await fetch(DATA_URL)
+
+  if (!response.ok) {
+    throw new Error('Could not load products.json')
+  }
+
+  products = await response.json()
+  return products
+}
 
 export function getProducts() {
   return products
 }
 
-export function getProductById(id) {
+export function findProduct(id) {
   return products.find((product) => product.id === id)
 }
 
 export function getCategories() {
-  const categories = products.map((product) => product.category)
-  return ['All', ...new Set(categories)]
+  const names = products.map((product) => product.category)
+  return ['All', ...new Set(names)]
 }
 
 export function filterByCategory(category) {
