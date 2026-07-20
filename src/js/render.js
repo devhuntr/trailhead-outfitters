@@ -30,7 +30,7 @@ function productCard(product) {
           <span class="card-rating">${product.rating} / 5</span>
         </div>
         <button class="btn" data-add="${product.id}" ${soldOut ? 'disabled' : ''}>
-          ${soldOut ? 'Out of Stock' : 'Add to Cart'}
+          <span class="btn-label">${soldOut ? 'Out of Stock' : 'Add to Cart'}</span>
         </button>
       </div>
     </article>
@@ -57,33 +57,26 @@ export function renderCatalog(products, categories, active) {
   `
 }
 
-export function renderDetail(product) {
-  if (!product) {
-    return `<div class="page"><h2>Product Not Found</h2>
-      <p><a class="link" href="#/">Back to the shop</a></p></div>`
-  }
-
+export function renderModalContent(product) {
   const soldOut = !product.inStock
 
   return `
-    <div class="page">
-      <p><a class="link" href="#/">Back to the shop</a></p>
-      <div class="detail">
-        <div class="detail-image">${product.category}</div>
-        <div class="detail-info">
-          <p class="card-category">${product.category}</p>
-          <h2>${product.name}</h2>
-          <p class="detail-price">${money(product.price)}</p>
-          <p>${product.description}</p>
-          <ul class="specs">
-            <li><strong>Rating:</strong> ${product.rating} out of 5</li>
-            <li><strong>Availability:</strong> ${soldOut ? 'Out of stock' : 'In stock'}</li>
-            <li><strong>Item number:</strong> ${product.id}</li>
-          </ul>
-          <button class="btn btn-wide" data-add="${product.id}" ${soldOut ? 'disabled' : ''}>
-            ${soldOut ? 'Out of Stock' : 'Add to Cart'}
-          </button>
-        </div>
+    <button class="modal-close" type="button" data-close-modal aria-label="Close">&times;</button>
+    <div class="detail">
+      <div class="detail-image">${product.category}</div>
+      <div class="detail-info">
+        <p class="card-category">${product.category}</p>
+        <h1 id="modal-title">${product.name}</h1>
+        <p class="detail-price">${money(product.price)}</p>
+        <p>${product.description}</p>
+        <ul class="specs">
+          <li><strong>Rating:</strong> ${product.rating} out of 5</li>
+          <li><strong>Availability:</strong> ${soldOut ? 'Out of stock' : 'In stock'}</li>
+          <li><strong>Item number:</strong> ${product.id}</li>
+        </ul>
+        <button class="btn btn-wide" data-add="${product.id}" ${soldOut ? 'disabled' : ''}>
+          <span class="btn-label">${soldOut ? 'Out of Stock' : 'Add to Cart'}</span>
+        </button>
       </div>
     </div>
   `

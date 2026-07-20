@@ -508,6 +508,52 @@ h2 {
   text-align: center;
 }
 
+/* Modal */
+
+.modal {
+  width: min(900px, calc(100vw - 2rem));
+  padding: 2rem;
+  border: 2px solid var(--color-forest);
+  background: var(--color-canvas);
+  color: var(--color-charcoal);
+}
+
+.modal::backdrop {
+  background: rgba(27, 48, 34, 0.55);
+}
+
+.modal .detail {
+  margin-top: 0.5rem;
+}
+
+.modal h1 {
+  font-family: 'Oswald', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 0 0.25rem;
+  color: var(--color-forest);
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.75rem;
+  width: 40px;
+  height: 40px;
+  font-size: 1.75rem;
+  line-height: 1;
+  background: none;
+  border: none;
+  color: var(--color-forest);
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: var(--color-orange);
+}
+
 /* Mobile */
 
 @media (max-width: 800px) {
@@ -518,6 +564,10 @@ h2 {
 
   .detail-image {
     height: 240px;
+  }
+
+  .modal {
+    padding: 1.5rem;
   }
 }
 
