@@ -4,23 +4,54 @@ function money(amount) {
   return '$' + amount.toFixed(2)
 }
 
+// Product data is ours, but the search query comes from the user and lands in
+// both element text and an attribute value, so it has to be escaped.
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+// Every link carries the current filter state, so closing a product returns to
+// the same filtered catalog the shopper was looking at.
+function withParams(extra = {}, state = {}) {
+  const params = new URLSearchParams()
+
+  if (state.category && state.category !== 'All') params.set('category', state.category)
+  if (state.search) params.set('search', state.search)
+
+  Object.entries(extra).forEach(([key, value]) => {
+    if (value === null || value === '') params.delete(key)
+    else params.set(key, value)
+  })
+
+  const query = params.toString()
+  return query ? `?${query}` : '/'
+}
+
 export function renderFilters(categories, active) {
   return categories
     .map((category) => {
-      const activeClass = category === active ? ' is-active' : ''
-      return `<button class="filter${activeClass}" data-category="${category}">${category}</button>`
+      const isActive = category === active
+      return `<button class="filter${isActive ? ' is-active' : ''}"
+        data-category="${escapeHtml(category)}"
+        aria-pressed="${isActive}">${escapeHtml(category)}</button>`
     })
     .join('')
 }
 
-function productCard(product) {
+function productCard(product, state) {
   const soldOut = !product.inStock
+  const href = withParams({ product: product.id }, state)
 
   // A sized product cannot be added straight from the catalog, because the size
   // picker only exists in the modal. Send the shopper there to choose one.
   const action =
     product.sizes && !soldOut
-      ? `<a class="btn btn-card-link" href="#/product/${product.id}">
+      ? `<a class="btn btn-card-link" href="${href}">
            <span class="btn-label">Select Size</span>
          </a>`
       : `<button class="btn" data-add="${product.id}" ${soldOut ? 'disabled' : ''}>
@@ -29,16 +60,16 @@ function productCard(product) {
 
   return `
     <article class="card">
-      <a class="card-image" href="#/product/${product.id}">${product.category}</a>
+      <a class="card-image" href="${href}" tabindex="-1" aria-hidden="true">${product.category}</a>
       <div class="card-body">
         <p class="card-category">${product.category}</p>
         <h3 class="card-name">
-          <a href="#/product/${product.id}">${product.name}</a>
+          <a href="${href}">${product.name}</a>
         </h3>
         <p class="card-desc">${product.description}</p>
         <div class="card-meta">
           <span class="card-price">${money(product.price)}</span>
-          <span class="card-rating">${product.rating} / 5</span>
+          <span class="card-rating" aria-label="Rated ${product.rating} out of 5">${product.rating} / 5</span>
         </div>
         ${action}
       </div>
@@ -46,12 +77,27 @@ function productCard(product) {
   `
 }
 
-export function renderCatalog(products, categories, active) {
-  const grid =
-    products.length === 0
-      ? '<p class="empty">No gear in this category yet.</p>'
-      : products.map(productCard).join('')
+// The grid and the result count are updated together as the shopper types, so
+// they are built here rather than inline in renderCatalog.
+export function renderResults(products, total, state) {
+  if (products.length === 0) {
+    const query = state.search
+      ? ` matching “${escapeHtml(state.search)}”`
+      : ''
+    return `<p class="empty">No gear${query} in this category yet.</p>`
+  }
 
+  return products.map((product) => productCard(product, state)).join('')
+}
+
+export function resultCountText(shown, total) {
+  if (shown === total) {
+    return `Showing all ${total} items`
+  }
+  return `Showing ${shown} of ${total} items`
+}
+
+export function renderCatalog(products, categories, total, state) {
   return `
     <section class="hero">
       <h1>Gear Up For The Trail</h1>
@@ -60,8 +106,31 @@ export function renderCatalog(products, categories, active) {
 
     <div class="page">
       <h2>Shop All Gear</h2>
-      <div class="filters" id="filters">${renderFilters(categories, active)}</div>
-      <div class="grid">${grid}</div>
+
+      <div class="toolbar">
+        <form class="search" role="search" id="search-form" autocomplete="off">
+          <label class="visually-hidden" for="search-input">Search gear</label>
+          <input
+            type="search"
+            id="search-input"
+            name="search"
+            class="search-input"
+            placeholder="Search gear…"
+            value="${escapeHtml(state.search)}"
+            aria-describedby="result-count"
+          />
+        </form>
+
+        <div class="filters" id="filters" role="group" aria-label="Filter by category">
+          ${renderFilters(categories, state.category)}
+        </div>
+      </div>
+
+      <p class="result-count" id="result-count" role="status" aria-live="polite">
+        ${resultCountText(products.length, total)}
+      </p>
+
+      <div class="grid" id="grid">${renderResults(products, total, state)}</div>
     </div>
   `
 }
@@ -111,7 +180,7 @@ export function renderCart(lines, subtotal) {
       <div class="page">
         <h1>Your Cart</h1>
         <p class="empty">Your cart is empty.</p>
-        <p><a class="link" href="#/">Back to the shop</a></p>
+        <p><a class="link" href="/">Back to the shop</a></p>
       </div>
     `
   }
@@ -150,7 +219,7 @@ export function renderCart(lines, subtotal) {
       <ul class="cart-list">${rows}</ul>
       <div class="cart-summary">
         <p class="subtotal">Subtotal: <strong>${money(subtotal)}</strong></p>
-        <a class="btn btn-link" href="#/checkout">Checkout</a>
+        <a class="btn btn-link" href="?view=checkout">Checkout</a>
       </div>
     </div>
   `
@@ -162,7 +231,7 @@ export function renderCheckout(lines, subtotal) {
       <div class="page">
         <h1>Checkout</h1>
         <p class="empty">You need something in your cart before you can check out.</p>
-        <p><a class="link" href="#/">Back to the shop</a></p>
+        <p><a class="link" href="/">Back to the shop</a></p>
       </div>
     `
   }
@@ -224,7 +293,7 @@ export function renderConfirmation(name) {
     <div class="page confirmation">
       <h1>Order Placed</h1>
       <p>Thanks, ${name}. Your gear is on the way.</p>
-      <p><a class="link" href="#/">Keep shopping</a></p>
+      <p><a class="link" href="/">Keep shopping</a></p>
     </div>
   `
 }

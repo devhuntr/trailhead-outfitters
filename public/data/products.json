@@ -10,6 +10,16 @@
     "inStock": true
   },
   {
+    "id": "tent-ridgeback-4",
+    "name": "Ridgeback 4 Tent",
+    "category": "Shelter",
+    "price": 329.0,
+    "image": "/src/images/tent-ridgeback-4.jpg",
+    "description": "Roomy four-person car camping tent with a full-coverage vestibule.",
+    "rating": 4.5,
+    "inStock": true
+  },
+  {
     "id": "pack-summit-45",
     "name": "Summit 45L Backpack",
     "category": "Packs",
@@ -17,6 +27,16 @@
     "image": "/src/images/pack-summit-45.jpg",
     "description": "45-liter internal-frame pack sized for weekend trips.",
     "rating": 4.8,
+    "inStock": true
+  },
+  {
+    "id": "pack-alpine-65",
+    "name": "Alpine 65L Backpack",
+    "category": "Packs",
+    "price": 229.0,
+    "image": "/src/images/pack-alpine-65.jpg",
+    "description": "Expedition pack with a load-transferring hipbelt for multi-day hauls.",
+    "rating": 4.6,
     "inStock": true
   },
   {
@@ -29,6 +49,39 @@
     "rating": 4.5,
     "inStock": true,
     "sizes": ["8", "8.5", "9", "9.5", "10", "10.5", "11", "12"]
+  },
+  {
+    "id": "shoe-approach-trail",
+    "name": "Approach Trail Runners",
+    "category": "Footwear",
+    "price": 129.95,
+    "image": "/src/images/shoe-approach-trail.jpg",
+    "description": "Breathable low-profile trail runners with a rock plate underfoot.",
+    "rating": 4.3,
+    "inStock": true,
+    "sizes": ["8", "8.5", "9", "9.5", "10", "10.5", "11", "11.5", "12", "13"]
+  },
+  {
+    "id": "jacket-summit-down",
+    "name": "Summit Down Jacket",
+    "category": "Apparel",
+    "price": 189.0,
+    "image": "/src/images/jacket-summit-down.jpg",
+    "description": "800-fill down jacket that packs into its own chest pocket.",
+    "rating": 4.7,
+    "inStock": true,
+    "sizes": ["XS", "S", "M", "L", "XL", "XXL"]
+  },
+  {
+    "id": "shell-dryridge",
+    "name": "Dry Ridge Rain Shell",
+    "category": "Apparel",
+    "price": 159.0,
+    "image": "/src/images/shell-dryridge.jpg",
+    "description": "Three-layer waterproof shell with pit zips and a helmet-ready hood.",
+    "rating": 4.4,
+    "inStock": true,
+    "sizes": ["XS", "S", "M", "L", "XL", "XXL"]
   },
   {
     "id": "bag-nomad-20",
@@ -48,6 +101,16 @@
     "image": "/src/images/stove-trailfire.jpg",
     "description": "Compact canister stove that boils a liter of water in under four minutes.",
     "rating": 4.4,
+    "inStock": true
+  },
+  {
+    "id": "cookset-kettle",
+    "name": "Kettle Camp Cook Set",
+    "category": "Cooking",
+    "price": 69.99,
+    "image": "/src/images/cookset-kettle.jpg",
+    "description": "Nesting anodized pot, pan, and kettle set for two hungry hikers.",
+    "rating": 4.6,
     "inStock": true
   },
   {

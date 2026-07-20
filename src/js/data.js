@@ -28,9 +28,27 @@ export function getCategories() {
   return ['All', ...new Set(names)]
 }
 
-export function filterByCategory(category) {
-  if (category === 'All') {
-    return products
-  }
-  return products.filter((product) => product.category === category)
+// Pure so it can be tested without a DOM: the caller passes the list in.
+// Category and search stack, so "Footwear" + "trail" narrows within Footwear.
+export function matchProducts(list, { category = 'All', search = '' } = {}) {
+  const query = search.trim().toLowerCase()
+
+  return list.filter((product) => {
+    if (category !== 'All' && product.category !== category) {
+      return false
+    }
+
+    if (!query) return true
+
+    return (
+      product.name.toLowerCase().includes(query) ||
+      product.description.toLowerCase().includes(query) ||
+      product.category.toLowerCase().includes(query)
+    )
+  })
+}
+
+// Convenience wrapper over the module's loaded products.
+export function findProducts(options) {
+  return matchProducts(products, options)
 }

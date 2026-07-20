@@ -2,11 +2,14 @@ import './css/style.css'
 import {
   loadProducts,
   findProduct,
+  findProducts,
+  getProducts,
   getCategories,
-  filterByCategory,
 } from './js/data.js'
 import {
   renderCatalog,
+  renderResults,
+  resultCountText,
   renderModalContent,
   renderCart,
   renderCheckout,
@@ -22,8 +25,6 @@ import {
   getSubtotal,
 } from './js/cart.js'
 
-let activeCategory = 'All'
-
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
 
 // Pending "Added" -> "Add to Cart" label resets, keyed by button. A WeakMap so
@@ -35,15 +36,51 @@ const modal = document.querySelector('#product-modal')
 const modalContent = document.querySelector('#modal-content')
 const announcer = document.querySelector('#cart-announcer')
 
+// All view state lives in the query string, so any view is linkable and
+// survives a refresh: ?view=cart, ?category=Footwear&search=boot&product=<id>
+function readState() {
+  const params = new URLSearchParams(window.location.search)
+
+  return {
+    view: params.get('view') || 'catalog',
+    product: params.get('product'),
+    category: params.get('category') || 'All',
+    search: params.get('search') || '',
+  }
+}
+
+function buildUrl(updates) {
+  const params = new URLSearchParams(window.location.search)
+
+  Object.entries(updates).forEach(([key, value]) => {
+    if (value === null || value === '') params.delete(key)
+    else params.set(key, value)
+  })
+
+  const query = params.toString()
+  return query ? `${window.location.pathname}?${query}` : window.location.pathname
+}
+
+function navigate(updates, { replace = false } = {}) {
+  const url = buildUrl(updates)
+
+  if (replace) window.history.replaceState({}, '', url)
+  else window.history.pushState({}, '', url)
+
+  router()
+}
+
 // True when the page was loaded straight onto a product URL, so there is no
 // history entry to go back to when the modal closes.
-let deepLinked = window.location.hash.startsWith('#/product/')
+let deepLinked = new URLSearchParams(window.location.search).has('product')
 // The product id whose card opened the modal. Stored as an id rather than the
 // element itself because the catalog is re-rendered underneath the modal, which
 // detaches the original node.
 let modalTriggerId = null
 // Set on close, consumed by router() once the catalog has been re-rendered.
 let pendingFocusId = null
+// Debounce handle for the search box.
+let searchTimer = null
 
 function updateCartCount() {
   document.querySelector('#cart-count').textContent = getCartCount()
@@ -58,39 +95,49 @@ function closeModal() {
   if (modal.open) modal.close()
 }
 
+// Swaps only the grid and the result count, so the search input keeps focus and
+// caret position while the shopper is typing.
+function updateResults() {
+  const state = readState()
+  const matches = findProducts(state)
+  const total = getProducts().length
+
+  const grid = document.querySelector('#grid')
+  const count = document.querySelector('#result-count')
+  if (!grid || !count) return
+
+  grid.innerHTML = renderResults(matches, total, state)
+  count.textContent = resultCountText(matches.length, total)
+}
+
 function router() {
-  const hash = window.location.hash || '#/'
+  const state = readState()
 
-  if (hash.startsWith('#/product/')) {
-    const id = hash.replace('#/product/', '')
-    const product = findProduct(id)
-
-    if (product) {
-      // The catalog stays rendered underneath the modal.
-      view.innerHTML = renderCatalog(
-        filterByCategory(activeCategory),
-        getCategories(),
-        activeCategory
-      )
-      openModal(product)
-    } else {
-      closeModal()
-      view.innerHTML = `<div class="page"><h1>Product Not Found</h1>
-        <p><a class="link" href="#/">Back to the shop</a></p></div>`
-    }
-  } else if (hash === '#/cart') {
+  if (state.view === 'cart') {
     closeModal()
     view.innerHTML = renderCart(getCartLines(), getSubtotal())
-  } else if (hash === '#/checkout') {
+  } else if (state.view === 'checkout') {
     closeModal()
     view.innerHTML = renderCheckout(getCartLines(), getSubtotal())
   } else {
-    closeModal()
-    view.innerHTML = renderCatalog(
-      filterByCategory(activeCategory),
-      getCategories(),
-      activeCategory
-    )
+    const product = state.product ? findProduct(state.product) : null
+
+    if (state.product && !product) {
+      closeModal()
+      view.innerHTML = `<div class="page"><h1>Product Not Found</h1>
+        <p><a class="link" href="/">Back to the shop</a></p></div>`
+    } else {
+      // The catalog stays rendered underneath the modal.
+      view.innerHTML = renderCatalog(
+        findProducts(state),
+        getCategories(),
+        getProducts().length,
+        state
+      )
+
+      if (product) openModal(product)
+      else closeModal()
+    }
   }
 
   window.scrollTo(0, 0)
@@ -99,7 +146,10 @@ function router() {
   // Return focus to the card that opened the modal, now that the catalog has
   // been re-rendered and the original link node replaced.
   if (pendingFocusId) {
-    const link = view.querySelector(`a[href="#/product/${pendingFocusId}"]`)
+    const link = view.querySelector(
+      `.card-name a[href*="product=${pendingFocusId}"],
+       .btn-card-link[href*="product=${pendingFocusId}"]`
+    )
     if (link) link.focus()
     pendingFocusId = null
   }
@@ -166,8 +216,8 @@ function handleClick(event) {
 
   const filterButton = event.target.closest('[data-category]')
   if (filterButton) {
-    activeCategory = filterButton.dataset.category
-    router()
+    const category = filterButton.dataset.category
+    navigate({ category: category === 'All' ? null : category })
     return
   }
 
@@ -189,7 +239,49 @@ function handleClick(event) {
   }
 }
 
+// Internal links are plain hrefs so they work without JS and can be opened in a
+// new tab, but a normal click is handled in place via the History API.
+function handleLinkClick(event) {
+  const link = event.target.closest('a[href^="?"], a[href="/"]')
+  if (!link) return
+
+  // Let the browser handle modified clicks and anything already cancelled.
+  if (event.defaultPrevented) return
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+  if (event.button !== 0) return
+
+  const href = link.getAttribute('href')
+
+  // Remember which card opened the modal so focus can return to it later.
+  const params = new URLSearchParams(href.split('?')[1] || '')
+  if (params.has('product')) modalTriggerId = params.get('product')
+
+  event.preventDefault()
+  window.history.pushState({}, '', href)
+  router()
+}
+
+function handleSearchInput(event) {
+  if (event.target.id !== 'search-input') return
+
+  const { value } = event.target
+  clearTimeout(searchTimer)
+
+  // Debounced, and replaceState rather than pushState, so typing a query does
+  // not bury the previous page under one history entry per keystroke.
+  searchTimer = setTimeout(() => {
+    window.history.replaceState({}, '', buildUrl({ search: value.trim() }))
+    updateResults()
+  }, 250)
+}
+
 function handleSubmit(event) {
+  // The search box filters as you type; Enter should not reload the page.
+  if (event.target.id === 'search-form') {
+    event.preventDefault()
+    return
+  }
+
   if (event.target.id !== 'order-form') return
   event.preventDefault()
 
@@ -247,19 +339,14 @@ async function start() {
     return
   }
 
-  view.addEventListener('click', handleClick)
-  view.addEventListener('submit', handleSubmit)
-  window.addEventListener('hashchange', router)
+  // Link interception is document-level so it covers the header nav, the
+  // catalog, and anything rendered inside the modal.
+  document.addEventListener('click', handleLinkClick)
 
-  // Remember which card opened the modal so focus can go back to it. The id is
-  // stored rather than the element, because router() replaces view.innerHTML
-  // and detaches the node before the modal ever closes.
-  view.addEventListener('click', (event) => {
-    const productLink = event.target.closest('a[href^="#/product/"]')
-    if (productLink) {
-      modalTriggerId = productLink.getAttribute('href').replace('#/product/', '')
-    }
-  })
+  view.addEventListener('click', handleClick)
+  view.addEventListener('input', handleSearchInput)
+  view.addEventListener('submit', handleSubmit)
+  window.addEventListener('popstate', router)
 
   // One click listener for the modal: the close button, the backdrop, and the
   // shared cart/size handlers. The dialog element itself is the backdrop area,
@@ -282,7 +369,7 @@ async function start() {
 
   // Fires for Esc, the close button, and backdrop clicks alike.
   modal.addEventListener('close', () => {
-    if (!window.location.hash.startsWith('#/product/')) {
+    if (!readState().product) {
       // router() closed the modal while navigating elsewhere. Leave focus alone.
       modalTriggerId = null
       return
@@ -292,10 +379,11 @@ async function start() {
     modalTriggerId = null
 
     if (deepLinked) {
+      // Nothing to go back to, so drop the product param in place.
       deepLinked = false
-      window.location.hash = '#/'
+      navigate({ product: null }, { replace: true })
     } else {
-      history.back()
+      window.history.back()
     }
   })
 
