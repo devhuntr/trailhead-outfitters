@@ -33,6 +33,7 @@ const resetTimers = new WeakMap()
 const view = document.querySelector('#view')
 const modal = document.querySelector('#product-modal')
 const modalContent = document.querySelector('#modal-content')
+const announcer = document.querySelector('#cart-announcer')
 
 // True when the page was loaded straight onto a product URL, so there is no
 // history entry to go back to when the modal closes.
@@ -64,14 +65,13 @@ function router() {
     const id = hash.replace('#/product/', '')
     const product = findProduct(id)
 
-    // The catalog stays rendered underneath the modal.
-    view.innerHTML = renderCatalog(
-      filterByCategory(activeCategory),
-      getCategories(),
-      activeCategory
-    )
-
     if (product) {
+      // The catalog stays rendered underneath the modal.
+      view.innerHTML = renderCatalog(
+        filterByCategory(activeCategory),
+        getCategories(),
+        activeCategory
+      )
       openModal(product)
     } else {
       closeModal()
@@ -109,6 +109,14 @@ function router() {
 // With reduced motion the animation never runs, so the label swaps immediately.
 function playAddedFeedback(button) {
   const label = button.querySelector('.btn-label')
+
+  // Screen readers get the same confirmation the animation gives sighted users.
+  const card = button.closest('.card, .detail')
+  const heading = card && card.querySelector('.card-name, h1')
+  const productName = heading ? heading.textContent.trim() : 'Item'
+  const sizeSelect = document.querySelector('#size-select')
+  const sizeNote = sizeSelect && sizeSelect.value ? `, size ${sizeSelect.value}` : ''
+  announcer.textContent = `${productName}${sizeNote} added to cart`
 
   const showAdded = () => {
     label.textContent = 'Added'
@@ -194,21 +202,37 @@ function handleSubmit(event) {
   const zip = data.get('zip').trim()
   const error = document.querySelector('#form-error')
 
+  // Clear previous invalid marks before revalidating.
+  form.querySelectorAll('input').forEach((input) => {
+    input.removeAttribute('aria-invalid')
+  })
+
+  const fail = (message, fieldName) => {
+    error.textContent = message
+    const input = form.querySelector(`[name="${fieldName}"]`)
+    input.setAttribute('aria-invalid', 'true')
+    input.focus()
+  }
+
   if (!name || !email || !address || !city || !zip) {
-    error.textContent = 'Please fill out every field.'
+    const firstEmpty = ['name', 'email', 'address', 'city', 'zip'].find(
+      (field) => !data.get(field).trim()
+    )
+    fail('Please fill out every field.', firstEmpty)
     return
   }
 
   if (!email.includes('@') || !email.includes('.')) {
-    error.textContent = 'Please enter a valid email address.'
+    fail('Please enter a valid email address.', 'email')
     return
   }
 
   if (!/^\d{5}$/.test(zip)) {
-    error.textContent = 'Zip code needs to be 5 numbers.'
+    fail('Zip code needs to be 5 numbers.', 'zip')
     return
   }
 
+  error.textContent = ''
   clearCart()
   view.innerHTML = renderConfirmation(name)
   updateCartCount()
@@ -219,7 +243,7 @@ async function start() {
     await loadProducts()
   } catch {
     view.innerHTML =
-      '<div class="page"><h2>Something went wrong</h2><p>The product list could not be loaded.</p></div>'
+      '<div class="page"><h1>Something went wrong</h1><p>The product list could not be loaded.</p></div>'
     return
   }
 

@@ -16,6 +16,17 @@ export function renderFilters(categories, active) {
 function productCard(product) {
   const soldOut = !product.inStock
 
+  // A sized product cannot be added straight from the catalog, because the size
+  // picker only exists in the modal. Send the shopper there to choose one.
+  const action =
+    product.sizes && !soldOut
+      ? `<a class="btn btn-card-link" href="#/product/${product.id}">
+           <span class="btn-label">Select Size</span>
+         </a>`
+      : `<button class="btn" data-add="${product.id}" ${soldOut ? 'disabled' : ''}>
+           <span class="btn-label">${soldOut ? 'Out of Stock' : 'Add to Cart'}</span>
+         </button>`
+
   return `
     <article class="card">
       <a class="card-image" href="#/product/${product.id}">${product.category}</a>
@@ -29,9 +40,7 @@ function productCard(product) {
           <span class="card-price">${money(product.price)}</span>
           <span class="card-rating">${product.rating} / 5</span>
         </div>
-        <button class="btn" data-add="${product.id}" ${soldOut ? 'disabled' : ''}>
-          <span class="btn-label">${soldOut ? 'Out of Stock' : 'Add to Cart'}</span>
-        </button>
+        ${action}
       </div>
     </article>
   `
@@ -100,7 +109,7 @@ export function renderCart(lines, subtotal) {
   if (lines.length === 0) {
     return `
       <div class="page">
-        <h2>Your Cart</h2>
+        <h1>Your Cart</h1>
         <p class="empty">Your cart is empty.</p>
         <p><a class="link" href="#/">Back to the shop</a></p>
       </div>
@@ -121,12 +130,15 @@ export function renderCart(lines, subtotal) {
           <p>${money(line.product.price)} each</p>
         </div>
         <div class="stepper">
-          <button data-step="-1" data-id="${line.product.id}" data-size="${sizeAttr}">-</button>
+          <button data-step="-1" data-id="${line.product.id}" data-size="${sizeAttr}"
+            aria-label="Decrease quantity of ${line.product.name}">-</button>
           <span>${line.qty}</span>
-          <button data-step="1" data-id="${line.product.id}" data-size="${sizeAttr}">+</button>
+          <button data-step="1" data-id="${line.product.id}" data-size="${sizeAttr}"
+            aria-label="Increase quantity of ${line.product.name}">+</button>
         </div>
         <p class="cart-line-total">${money(line.product.price * line.qty)}</p>
-        <button class="remove" data-remove="${line.product.id}" data-size="${sizeAttr}">Remove</button>
+        <button class="remove" data-remove="${line.product.id}" data-size="${sizeAttr}"
+          aria-label="Remove ${line.product.name} from cart">Remove</button>
       </li>
     `
     })
@@ -134,7 +146,7 @@ export function renderCart(lines, subtotal) {
 
   return `
     <div class="page">
-      <h2>Your Cart</h2>
+      <h1>Your Cart</h1>
       <ul class="cart-list">${rows}</ul>
       <div class="cart-summary">
         <p class="subtotal">Subtotal: <strong>${money(subtotal)}</strong></p>
@@ -148,7 +160,7 @@ export function renderCheckout(lines, subtotal) {
   if (lines.length === 0) {
     return `
       <div class="page">
-        <h2>Checkout</h2>
+        <h1>Checkout</h1>
         <p class="empty">You need something in your cart before you can check out.</p>
         <p><a class="link" href="#/">Back to the shop</a></p>
       </div>
@@ -165,33 +177,36 @@ export function renderCheckout(lines, subtotal) {
 
   return `
     <div class="page">
-      <h2>Checkout</h2>
+      <h1>Checkout</h1>
       <div class="checkout">
         <form class="order-form" id="order-form" novalidate>
           <label>
             Full name
-            <input type="text" name="name" required />
+            <input type="text" name="name" autocomplete="name" required />
           </label>
           <label>
             Email
-            <input type="email" name="email" required />
+            <input type="email" name="email" autocomplete="email" required />
           </label>
           <label>
             Shipping address
-            <input type="text" name="address" required />
+            <input type="text" name="address" autocomplete="street-address" required />
           </label>
           <div class="form-row">
             <label>
               City
-              <input type="text" name="city" required />
+              <input type="text" name="city" autocomplete="address-level2" required />
             </label>
             <label>
               Zip code
-              <input type="text" name="zip" required pattern="\\d{5}" />
+              <input type="text" name="zip" autocomplete="postal-code"
+                inputmode="numeric" required pattern="\\d{5}" />
             </label>
           </div>
-          <p class="form-error" id="form-error"></p>
-          <button class="btn btn-wide" type="submit">Place Order</button>
+          <p class="form-error" id="form-error" role="alert"></p>
+          <button class="btn btn-wide" type="submit">
+            <span class="btn-label">Place Order</span>
+          </button>
         </form>
 
         <aside class="order-summary">
@@ -207,7 +222,7 @@ export function renderCheckout(lines, subtotal) {
 export function renderConfirmation(name) {
   return `
     <div class="page confirmation">
-      <h2>Order Placed</h2>
+      <h1>Order Placed</h1>
       <p>Thanks, ${name}. Your gear is on the way.</p>
       <p><a class="link" href="#/">Keep shopping</a></p>
     </div>
