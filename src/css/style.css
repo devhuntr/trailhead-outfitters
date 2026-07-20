@@ -3,7 +3,7 @@
 :root {
   --color-forest: #1b3022; /* headers, footers, brand areas */
   --color-stone: #f5f3f0; /* main surface background */
-  --color-orange: #ff5a00; /* buttons and highlights */
+  --color-orange: #c74600; /* buttons and highlights - 4.88:1 on white */
   --color-canvas: #fbf9f6; /* page background */
   --color-charcoal: #242424; /* body text */
 }
@@ -185,7 +185,7 @@ h2 {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color-forest);
-  opacity: 0.55;
+  opacity: 0.8;
   text-decoration: none;
 }
 
@@ -275,7 +275,8 @@ h2 {
 }
 
 .btn:disabled {
-  background: #c9c6c1;
+  background: #d8d5d1;
+  color: #3a3a3a;
   cursor: not-allowed;
 }
 
