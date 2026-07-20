@@ -364,6 +364,16 @@ h2 {
   opacity: 0.75;
 }
 
+/* Specific enough to beat the `.cart-details p` rule above, which would
+   otherwise dim the size label with its 0.75 opacity. */
+.cart-details .cart-size {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-forest);
+  opacity: 1;
+}
+
 .stepper {
   display: flex;
   align-items: center;

@@ -101,24 +101,28 @@ export function renderCart(lines, subtotal) {
   }
 
   const rows = lines
-    .map(
-      (line) => `
+    .map((line) => {
+      const sizeAttr = line.size ?? ''
+      const sizeLabel = line.size ? `<p class="cart-size">Size ${line.size}</p>` : ''
+
+      return `
       <li class="cart-row">
         <div class="cart-thumb">${line.product.category}</div>
         <div class="cart-details">
           <h3>${line.product.name}</h3>
+          ${sizeLabel}
           <p>${money(line.product.price)} each</p>
         </div>
         <div class="stepper">
-          <button data-step="-1" data-id="${line.product.id}">-</button>
+          <button data-step="-1" data-id="${line.product.id}" data-size="${sizeAttr}">-</button>
           <span>${line.qty}</span>
-          <button data-step="1" data-id="${line.product.id}">+</button>
+          <button data-step="1" data-id="${line.product.id}" data-size="${sizeAttr}">+</button>
         </div>
         <p class="cart-line-total">${money(line.product.price * line.qty)}</p>
-        <button class="remove" data-remove="${line.product.id}">Remove</button>
+        <button class="remove" data-remove="${line.product.id}" data-size="${sizeAttr}">Remove</button>
       </li>
     `
-    )
+    })
     .join('')
 
   return `
@@ -145,11 +149,11 @@ export function renderCheckout(lines, subtotal) {
   }
 
   const summary = lines
-    .map(
-      (line) =>
-        `<li><span>${line.product.name} x ${line.qty}</span>
+    .map((line) => {
+      const sizeLabel = line.size ? ` (Size ${line.size})` : ''
+      return `<li><span>${line.product.name}${sizeLabel} x ${line.qty}</span>
          <span>${money(line.product.price * line.qty)}</span></li>`
-    )
+    })
     .join('')
 
   return `

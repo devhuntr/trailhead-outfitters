@@ -52,6 +52,11 @@ function router() {
   updateCartCount()
 }
 
+// data-size is "" for unsized products; the cart uses null for those.
+function readSize(element) {
+  return element.dataset.size ? element.dataset.size : null
+}
+
 // One click listener on the view instead of one on every button, because the
 // buttons get rebuilt every time the page re-renders.
 function handleClick(event) {
@@ -75,14 +80,18 @@ function handleClick(event) {
 
   const stepButton = event.target.closest('[data-step]')
   if (stepButton) {
-    updateQty(stepButton.dataset.id, Number(stepButton.dataset.step))
+    updateQty(
+      stepButton.dataset.id,
+      readSize(stepButton),
+      Number(stepButton.dataset.step)
+    )
     router()
     return
   }
 
   const removeButton = event.target.closest('[data-remove]')
   if (removeButton) {
-    removeFromCart(removeButton.dataset.remove)
+    removeFromCart(removeButton.dataset.remove, readSize(removeButton))
     router()
   }
 }
