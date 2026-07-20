@@ -16,6 +16,33 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;')
 }
 
+// Product imagery is optional. The image sits on top of a text placeholder, so
+// if the file is missing main.js can drop the <img> and the placeholder shows
+// through with no broken-image icon and no layout shift.
+//
+// `alt` is empty on the card and cart thumbnails on purpose: the product name
+// is already a link right beside them, and repeating it would make screen
+// readers announce every product twice. The modal image is the one place the
+// photo carries information of its own, so it gets the real description.
+function productMedia(product, { width, height, alt = '', lazy = true }) {
+  if (!product.image) {
+    return `<span class="media-label" aria-hidden="true">${product.category}</span>`
+  }
+
+  return `
+    <img
+      class="media-image"
+      src="${product.image}"
+      alt="${escapeHtml(alt)}"
+      width="${width}"
+      height="${height}"
+      ${lazy ? 'loading="lazy"' : ''}
+      decoding="async"
+    />
+    <span class="media-label" aria-hidden="true">${product.category}</span>
+  `
+}
+
 // Every link carries the current filter state, so closing a product returns to
 // the same filtered catalog the shopper was looking at.
 function withParams(extra = {}, state = {}) {
@@ -61,7 +88,9 @@ function productCard(product, state) {
 
   return `
     <article class="card">
-      <a class="card-image" href="${href}" tabindex="-1" aria-hidden="true">${product.category}</a>
+      <a class="card-image media" href="${href}" tabindex="-1" aria-hidden="true">
+        ${productMedia(product, { width: 400, height: 300 })}
+      </a>
       <div class="card-body">
         <p class="card-category">${product.category}</p>
         <h3 class="card-name">
@@ -154,7 +183,14 @@ export function renderModalContent(product) {
   return `
     <button class="modal-close" type="button" data-close-modal aria-label="Close">&times;</button>
     <div class="detail">
-      <div class="detail-image">${product.category}</div>
+      <div class="detail-image media">
+        ${productMedia(product, {
+          width: 600,
+          height: 600,
+          alt: product.alt || product.name,
+          lazy: false,
+        })}
+      </div>
       <div class="detail-info">
         <p class="card-category">${product.category}</p>
         <h1 id="modal-title">${product.name}</h1>
@@ -193,7 +229,9 @@ export function renderCart(lines, subtotal) {
 
       return `
       <li class="cart-row">
-        <div class="cart-thumb">${line.product.category}</div>
+        <div class="cart-thumb media">
+          ${productMedia(line.product, { width: 140, height: 140 })}
+        </div>
         <div class="cart-details">
           <h3>${line.product.name}</h3>
           ${sizeLabel}

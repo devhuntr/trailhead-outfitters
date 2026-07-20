@@ -221,6 +221,22 @@ h2,
   border: 2px solid var(--color-forest);
 }
 
+/* Product media: the photo lies on top of the text placeholder, so removing a
+   failed <img> reveals the placeholder with no extra state to manage. */
+.media {
+  position: relative;
+  overflow: hidden;
+}
+
+.media-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--color-stone);
+}
+
 .card-image,
 .detail-image,
 .cart-thumb {

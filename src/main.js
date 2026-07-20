@@ -348,6 +348,20 @@ async function start() {
   // catalog, and anything rendered inside the modal.
   document.addEventListener('click', handleLinkClick)
 
+  // Product photos are optional. Drop a failed image so the text placeholder
+  // underneath shows through instead of a broken-image icon. Load errors do not
+  // bubble, so this listens on the capture phase.
+  document.addEventListener(
+    'error',
+    (event) => {
+      const image = event.target
+      if (image.tagName === 'IMG' && image.classList.contains('media-image')) {
+        image.remove()
+      }
+    },
+    true
+  )
+
   view.addEventListener('click', handleClick)
   view.addEventListener('input', handleSearchInput)
   view.addEventListener('submit', handleSubmit)
