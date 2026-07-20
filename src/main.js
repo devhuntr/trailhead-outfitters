@@ -85,7 +85,22 @@ let pendingFocusId = null
 let searchTimer = null
 
 function updateCartCount() {
-  document.querySelector('#cart-count').textContent = getCartCount()
+  const el = document.querySelector('#cart-count')
+  const next = getCartCount()
+  const changed = el.textContent !== String(next)
+
+  el.textContent = next
+
+  // Pulse only when the number actually moves, so a plain re-render (opening
+  // the cart, navigating) does not make it jump for no reason.
+  if (changed) {
+    el.classList.remove('is-bumping')
+    void el.offsetWidth
+    el.classList.add('is-bumping')
+    el.addEventListener('animationend', () => el.classList.remove('is-bumping'), {
+      once: true,
+    })
+  }
 }
 
 function openModal(product) {
@@ -110,6 +125,12 @@ function updateResults() {
 
   grid.innerHTML = renderResults(matches, total, state)
   count.textContent = resultCountText(matches.length, total)
+
+  // A brief flash of the whole grid signals the results changed, without
+  // re-staggering every card on each keystroke.
+  grid.classList.remove('is-updating')
+  void grid.offsetWidth
+  grid.classList.add('is-updating')
 }
 
 function router() {

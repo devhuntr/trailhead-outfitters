@@ -71,7 +71,7 @@ export function renderFilters(categories, active) {
     .join('')
 }
 
-function productCard(product, state) {
+function productCard(product, state, index = 0) {
   const soldOut = !product.inStock
   const href = withParams({ product: product.id }, state)
 
@@ -87,7 +87,7 @@ function productCard(product, state) {
          </button>`
 
   return `
-    <article class="card">
+    <article class="card" style="--index: ${index}">
       <a class="card-image media" href="${href}" tabindex="-1" aria-hidden="true">
         ${productMedia(product, { width: 400, height: 300 })}
       </a>
@@ -117,7 +117,8 @@ export function renderResults(products, total, state) {
     return `<p class="empty">No gear${query} in this category yet.</p>`
   }
 
-  return products.map((product) => productCard(product, state)).join('')
+  // The index drives the staggered entrance delay in CSS.
+  return products.map((product, index) => productCard(product, state, index)).join('')
 }
 
 export function resultCountText(shown, total) {

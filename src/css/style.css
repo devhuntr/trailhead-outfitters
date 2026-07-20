@@ -13,6 +13,36 @@
   box-sizing: border-box;
 }
 
+/* Every interactive element eases between its colour states instead of
+   snapping. Colour-only, so this stays comfortable under reduced motion. */
+.site-nav a,
+.logo,
+.filter,
+.card-name a,
+.btn,
+.stepper button,
+.modal-close,
+.remove,
+.link,
+.summary-link {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+/* Cards lift slightly on hover to read as clickable. */
+.card {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(27, 48, 34, 0.16);
+}
+
 body {
   margin: 0;
   font-family: 'Public Sans', system-ui, sans-serif;
@@ -644,14 +674,20 @@ h2,
   to   { transform: scaleX(1); }
 }
 
-@keyframes modal-in {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes backdrop-in {
-  from { opacity: 0; }
+@keyframes grid-refresh {
+  from { opacity: 0.35; }
   to   { opacity: 1; }
+}
+
+@keyframes count-bump {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
 }
 
 /* The fill layer sweeps across the button while the item is added. */
@@ -675,12 +711,29 @@ h2,
   z-index: 1;
 }
 
-.modal[open] {
-  animation: modal-in 220ms ease-out;
+/* Product cards stagger in on a full render (page load, category change).
+   The delay is capped so the last card is not left waiting. */
+.grid .card {
+  animation: card-in 320ms ease-out backwards;
+  animation-delay: calc(min(var(--index, 0), 8) * 45ms);
 }
 
-.modal[open]::backdrop {
-  animation: backdrop-in 220ms ease-out;
+/* While typing in the search box the grid is swapped in place. A stagger on
+   every keystroke would be distracting, so the container flashes instead. */
+.grid.is-updating {
+  animation: grid-refresh 180ms ease-out;
+}
+
+.grid.is-updating .card {
+  animation: none;
+}
+
+#cart-count {
+  display: inline-block;
+}
+
+#cart-count.is-bumping {
+  animation: count-bump 400ms ease-out;
 }
 
 /* Confirmation checkmark: the circle draws, then the tick. Stroke lengths are
@@ -728,17 +781,21 @@ h2,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn.is-adding::after,
-  .modal[open],
-  .modal[open]::backdrop,
-  .check {
-    animation: none;
+  /* Broad off-switch: no element eases or plays a keyframe. Colour still
+     changes on hover, the modal still appears and disappears, the cart count
+     still updates -- just without the motion between states. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
   }
 
-  /* Skip the drawing, keep the drawn result. */
+  /* The checkmark is drawn with stroke-dashoffset, so zeroing the animation
+     alone would leave it invisible. Force it to its finished state. */
   .check-circle,
   .check-mark {
-    animation: none;
     stroke-dashoffset: 0;
   }
 }
@@ -781,10 +838,51 @@ h2,
   border: 2px solid var(--color-forest);
   background: var(--color-canvas);
   color: var(--color-charcoal);
+
+  /* Closed state. A <dialog> is set to display:none the moment close() fires,
+     so an exit animation needs `allow-discrete` to let the browser hold the
+     element around long enough to transition out. Without it the modal would
+     animate open and then vanish instantly. */
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  transition:
+    opacity 220ms ease-out,
+    transform 220ms ease-out,
+    overlay 220ms ease-out allow-discrete,
+    display 220ms ease-out allow-discrete;
+}
+
+.modal[open] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* The entry side: without this the dialog would start from its open state and
+   there would be nothing to animate from. */
+@starting-style {
+  .modal[open] {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
 }
 
 .modal::backdrop {
   background: rgba(27, 48, 34, 0.55);
+  opacity: 0;
+  transition:
+    opacity 220ms ease-out,
+    overlay 220ms ease-out allow-discrete,
+    display 220ms ease-out allow-discrete;
+}
+
+.modal[open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  .modal[open]::backdrop {
+    opacity: 0;
+  }
 }
 
 .modal .detail {
