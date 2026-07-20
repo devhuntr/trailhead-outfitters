@@ -24,6 +24,12 @@ import {
 
 let activeCategory = 'All'
 
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+
+// Pending "Added" -> "Add to Cart" label resets, keyed by button. A WeakMap so
+// buttons discarded by a re-render do not leak.
+const resetTimers = new WeakMap()
+
 const view = document.querySelector('#view')
 const modal = document.querySelector('#product-modal')
 const modalContent = document.querySelector('#modal-content')
@@ -99,6 +105,38 @@ function router() {
   }
 }
 
+// The fill animation drives the label swap so the two can never drift apart.
+// With reduced motion the animation never runs, so the label swaps immediately.
+function playAddedFeedback(button) {
+  const label = button.querySelector('.btn-label')
+
+  const showAdded = () => {
+    label.textContent = 'Added'
+    button.classList.remove('is-adding')
+    // Clear any pending reset so a rapid second click cannot revert the label
+    // early, while the sweep from that second click is still running.
+    clearTimeout(resetTimers.get(button))
+    resetTimers.set(
+      button,
+      setTimeout(() => {
+        label.textContent = 'Add to Cart'
+      }, 900)
+    )
+  }
+
+  if (prefersReducedMotion.matches) {
+    showAdded()
+    return
+  }
+
+  // Removing the class and forcing a reflow restarts the sweep from the left
+  // when the button is clicked again mid-animation.
+  button.classList.remove('is-adding')
+  void button.offsetWidth
+  button.classList.add('is-adding')
+  button.addEventListener('animationend', showAdded, { once: true })
+}
+
 // data-size is "" for unsized products; the cart uses null for those.
 function readSize(element) {
   return element.dataset.size ? element.dataset.size : null
@@ -114,12 +152,7 @@ function handleClick(event) {
 
     addToCart(addButton.dataset.add, size)
     updateCartCount()
-
-    const label = addButton.querySelector('.btn-label')
-    label.textContent = 'Added'
-    setTimeout(() => {
-      label.textContent = 'Add to Cart'
-    }, 900)
+    playAddedFeedback(addButton)
     return
   }
 

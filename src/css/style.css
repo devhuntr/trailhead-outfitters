@@ -257,6 +257,8 @@ h2 {
 /* Buttons */
 
 .btn {
+  position: relative;
+  overflow: hidden;
   margin-top: 0.75rem;
   width: 100%;
   padding: 0.75rem 1rem;
@@ -506,6 +508,60 @@ h2 {
 
 .confirmation {
   text-align: center;
+}
+
+/* Animation */
+
+@keyframes fill-sweep {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* The fill layer sweeps across the button while the item is added. */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-forest);
+  transform: scaleX(0);
+  transform-origin: left;
+  pointer-events: none;
+}
+
+.btn.is-adding::after {
+  animation: fill-sweep 600ms ease-out forwards;
+}
+
+/* Keeps the label above the fill layer. */
+.btn-label {
+  position: relative;
+  z-index: 1;
+}
+
+.modal[open] {
+  animation: modal-in 220ms ease-out;
+}
+
+.modal[open]::backdrop {
+  animation: backdrop-in 220ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn.is-adding::after,
+  .modal[open],
+  .modal[open]::backdrop {
+    animation: none;
+  }
 }
 
 /* Size selector */
