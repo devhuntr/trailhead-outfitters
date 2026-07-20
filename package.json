@@ -8,8 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "images": "python scripts/optimize_images.py"
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "vite": "^8.1.0",
