@@ -60,6 +60,18 @@ export function renderCatalog(products, categories, active) {
 export function renderModalContent(product) {
   const soldOut = !product.inStock
 
+  const sizeField = product.sizes
+    ? `
+      <div class="size-field">
+        <label for="size-select">Size</label>
+        <select id="size-select" name="size">
+          <option value="">Choose a size</option>
+          ${product.sizes.map((size) => `<option value="${size}">${size}</option>`).join('')}
+        </select>
+      </div>
+    `
+    : ''
+
   return `
     <button class="modal-close" type="button" data-close-modal aria-label="Close">&times;</button>
     <div class="detail">
@@ -74,7 +86,9 @@ export function renderModalContent(product) {
           <li><strong>Availability:</strong> ${soldOut ? 'Out of stock' : 'In stock'}</li>
           <li><strong>Item number:</strong> ${product.id}</li>
         </ul>
-        <button class="btn btn-wide" data-add="${product.id}" ${soldOut ? 'disabled' : ''}>
+        ${sizeField}
+        <button class="btn btn-wide" data-add="${product.id}"
+          ${soldOut || product.sizes ? 'disabled' : ''}>
           <span class="btn-label">${soldOut ? 'Out of Stock' : 'Add to Cart'}</span>
         </button>
       </div>

@@ -27,7 +27,8 @@
     "image": "/src/images/boot-ridgeline.jpg",
     "description": "Waterproof mid-cut boots with aggressive grip for rocky terrain.",
     "rating": 4.5,
-    "inStock": true
+    "inStock": true,
+    "sizes": ["8", "8.5", "9", "9.5", "10", "10.5", "11", "12"]
   },
   {
     "id": "bag-nomad-20",

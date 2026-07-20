@@ -109,11 +109,16 @@ function readSize(element) {
 function handleClick(event) {
   const addButton = event.target.closest('[data-add]')
   if (addButton) {
-    addToCart(addButton.dataset.add)
+    const sizeSelect = document.querySelector('#size-select')
+    const size = sizeSelect && sizeSelect.value ? sizeSelect.value : null
+
+    addToCart(addButton.dataset.add, size)
     updateCartCount()
-    addButton.textContent = 'Added'
+
+    const label = addButton.querySelector('.btn-label')
+    label.textContent = 'Added'
     setTimeout(() => {
-      addButton.textContent = 'Add to Cart'
+      label.textContent = 'Add to Cart'
     }, 900)
     return
   }
@@ -208,6 +213,14 @@ async function start() {
       return
     }
     handleClick(event)
+  })
+
+  // Sized products start with Add to Cart disabled until a size is picked.
+  modal.addEventListener('change', (event) => {
+    if (event.target.id !== 'size-select') return
+
+    const addButton = modal.querySelector('[data-add]')
+    addButton.disabled = event.target.value === ''
   })
 
   // Fires for Esc, the close button, and backdrop clicks alike.
