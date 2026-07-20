@@ -1,4 +1,5 @@
 // Builds the HTML for each view.
+import { ORDER_FIELDS, FIELD_LABELS } from './validate.js'
 
 function money(amount) {
   return '$' + amount.toFixed(2)
@@ -225,6 +226,53 @@ export function renderCart(lines, subtotal) {
   `
 }
 
+// The error message sits outside the label on purpose: a wrapping label would
+// fold the error text into the input's accessible name.
+function orderField(field, { type = 'text', autocomplete, inputmode } = {}) {
+  return `
+    <div class="field">
+      <label for="checkout-${field}">${FIELD_LABELS[field]}</label>
+      <input
+        type="${type}"
+        id="checkout-${field}"
+        name="${field}"
+        ${autocomplete ? `autocomplete="${autocomplete}"` : ''}
+        ${inputmode ? `inputmode="${inputmode}"` : ''}
+        required
+        aria-describedby="error-${field}"
+      />
+      <p class="field-error" id="error-${field}"></p>
+    </div>
+  `
+}
+
+// A summary above the form, so the shopper sees every problem at once and can
+// jump straight to any of them.
+export function renderErrorSummary(errors) {
+  const failed = ORDER_FIELDS.filter((field) => errors[field])
+  if (failed.length === 0) return ''
+
+  const items = failed
+    .map(
+      (field) => `
+      <li>
+        <button type="button" class="summary-link" data-goto="${field}">
+          ${FIELD_LABELS[field]}: ${escapeHtml(errors[field])}
+        </button>
+      </li>`
+    )
+    .join('')
+
+  const noun = failed.length === 1 ? 'problem' : 'problems'
+
+  return `
+    <p class="form-summary-title">
+      Please fix ${failed.length} ${noun} before placing your order
+    </p>
+    <ul class="form-summary-list">${items}</ul>
+  `
+}
+
 export function renderCheckout(lines, subtotal) {
   if (lines.length === 0) {
     return `
@@ -249,30 +297,17 @@ export function renderCheckout(lines, subtotal) {
       <h1>Checkout</h1>
       <div class="checkout">
         <form class="order-form" id="order-form" novalidate>
-          <label>
-            Full name
-            <input type="text" name="name" autocomplete="name" required />
-          </label>
-          <label>
-            Email
-            <input type="email" name="email" autocomplete="email" required />
-          </label>
-          <label>
-            Shipping address
-            <input type="text" name="address" autocomplete="street-address" required />
-          </label>
+          <div class="form-summary" id="form-error" role="alert" tabindex="-1" hidden></div>
+
+          ${orderField('name', { autocomplete: 'name' })}
+          ${orderField('email', { type: 'email', autocomplete: 'email' })}
+          ${orderField('address', { autocomplete: 'street-address' })}
+
           <div class="form-row">
-            <label>
-              City
-              <input type="text" name="city" autocomplete="address-level2" required />
-            </label>
-            <label>
-              Zip code
-              <input type="text" name="zip" autocomplete="postal-code"
-                inputmode="numeric" required pattern="\\d{5}" />
-            </label>
+            ${orderField('city', { autocomplete: 'address-level2' })}
+            ${orderField('zip', { autocomplete: 'postal-code', inputmode: 'numeric' })}
           </div>
-          <p class="form-error" id="form-error" role="alert"></p>
+
           <button class="btn btn-wide" type="submit">
             <span class="btn-label">Place Order</span>
           </button>
@@ -291,8 +326,13 @@ export function renderCheckout(lines, subtotal) {
 export function renderConfirmation(name) {
   return `
     <div class="page confirmation">
+      <svg class="check" viewBox="0 0 52 52" role="img"
+        aria-label="Order confirmed" focusable="false">
+        <circle class="check-circle" cx="26" cy="26" r="24" />
+        <path class="check-mark" d="M14 27 l8 8 l16 -16" />
+      </svg>
       <h1>Order Placed</h1>
-      <p>Thanks, ${name}. Your gear is on the way.</p>
+      <p>Thanks, ${escapeHtml(name)}. Your gear is on the way.</p>
       <p><a class="link" href="/">Keep shopping</a></p>
     </div>
   `

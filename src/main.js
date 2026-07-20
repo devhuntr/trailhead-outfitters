@@ -14,7 +14,9 @@ import {
   renderCart,
   renderCheckout,
   renderConfirmation,
+  renderErrorSummary,
 } from './js/render.js'
+import { validateOrder, hasErrors, ORDER_FIELDS } from './js/validate.js'
 import {
   addToCart,
   removeFromCart,
@@ -214,6 +216,14 @@ function handleClick(event) {
     return
   }
 
+  // Jump from a summary entry straight to the field it describes.
+  const gotoButton = event.target.closest('[data-goto]')
+  if (gotoButton) {
+    const input = document.querySelector(`[name="${gotoButton.dataset.goto}"]`)
+    if (input) input.focus()
+    return
+  }
+
   const filterButton = event.target.closest('[data-category]')
   if (filterButton) {
     const category = filterButton.dataset.category
@@ -286,48 +296,43 @@ function handleSubmit(event) {
   event.preventDefault()
 
   const form = event.target
-  const data = new FormData(form)
-  const name = data.get('name').trim()
-  const email = data.get('email').trim()
-  const address = data.get('address').trim()
-  const city = data.get('city').trim()
-  const zip = data.get('zip').trim()
-  const error = document.querySelector('#form-error')
+  const values = Object.fromEntries(new FormData(form).entries())
+  const errors = validateOrder(values)
 
-  // Clear previous invalid marks before revalidating.
-  form.querySelectorAll('input').forEach((input) => {
-    input.removeAttribute('aria-invalid')
-  })
+  showErrors(form, errors)
 
-  const fail = (message, fieldName) => {
-    error.textContent = message
-    const input = form.querySelector(`[name="${fieldName}"]`)
-    input.setAttribute('aria-invalid', 'true')
-    input.focus()
-  }
-
-  if (!name || !email || !address || !city || !zip) {
-    const firstEmpty = ['name', 'email', 'address', 'city', 'zip'].find(
-      (field) => !data.get(field).trim()
-    )
-    fail('Please fill out every field.', firstEmpty)
+  if (hasErrors(errors)) {
+    // Focus the summary rather than the first bad field, so a screen reader
+    // hears the full list of problems before landing on any one of them.
+    form.querySelector('#form-error').focus()
     return
   }
 
-  if (!email.includes('@') || !email.includes('.')) {
-    fail('Please enter a valid email address.', 'email')
-    return
-  }
-
-  if (!/^\d{5}$/.test(zip)) {
-    fail('Zip code needs to be 5 numbers.', 'zip')
-    return
-  }
-
-  error.textContent = ''
   clearCart()
-  view.innerHTML = renderConfirmation(name)
+  view.innerHTML = renderConfirmation(values.name.trim())
   updateCartCount()
+}
+
+// Paints validation results onto the form: a summary at the top, a message
+// under each bad field, and aria-invalid for assistive tech.
+function showErrors(form, errors) {
+  const summary = form.querySelector('#form-error')
+  summary.innerHTML = renderErrorSummary(errors)
+  summary.hidden = !hasErrors(errors)
+
+  ORDER_FIELDS.forEach((field) => {
+    const input = form.querySelector(`[name="${field}"]`)
+    const message = form.querySelector(`#error-${field}`)
+    if (!input || !message) return
+
+    if (errors[field]) {
+      input.setAttribute('aria-invalid', 'true')
+      message.textContent = errors[field]
+    } else {
+      input.removeAttribute('aria-invalid')
+      message.textContent = ''
+    }
+  })
 }
 
 async function start() {

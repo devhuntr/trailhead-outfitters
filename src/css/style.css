@@ -6,6 +6,7 @@
   --color-orange: #c74600; /* buttons and highlights - 4.88:1 on white */
   --color-canvas: #fbf9f6; /* page background */
   --color-charcoal: #242424; /* body text */
+  --color-error: #b3261e; /* form errors - 6.22:1 on canvas */
 }
 
 * {
@@ -497,10 +498,13 @@ h2,
   gap: 1rem;
 }
 
-.order-form label {
+.field {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+
+.order-form label {
   font-weight: 600;
   font-size: 0.9rem;
 }
@@ -518,17 +522,71 @@ h2,
   outline-offset: 1px;
 }
 
+/* Invalid fields are marked by colour, a thicker border, AND the message
+   below, so the state never depends on colour alone. */
+.order-form input[aria-invalid='true'] {
+  border-color: var(--color-error);
+  background: #fffafa;
+}
+
+.field-error {
+  margin: 0;
+  min-height: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-error);
+}
+
+.field-error:empty {
+  display: none;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
-.form-error {
-  color: #b3261e;
+/* Error summary */
+
+.form-summary {
+  padding: 1rem 1.25rem;
+  border: 2px solid var(--color-error);
+  background: #fdf4f3;
+}
+
+.form-summary:focus-visible {
+  outline: 2px solid var(--color-error);
+  outline-offset: 2px;
+}
+
+.form-summary-title {
+  margin: 0 0 0.5rem;
+  font-family: 'Oswald', system-ui, sans-serif;
+  font-size: 1.05rem;
   font-weight: 600;
+  color: var(--color-error);
+}
+
+.form-summary-list {
   margin: 0;
-  min-height: 1.2rem;
+  padding-left: 1.1rem;
+}
+
+.form-summary-list li {
+  margin: 0.25rem 0;
+}
+
+.summary-link {
+  padding: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  color: var(--color-error);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .order-summary {
@@ -592,7 +650,7 @@ h2,
 }
 
 .btn.is-adding::after {
-  animation: fill-sweep 600ms ease-out forwards;
+  animation: fill-sweep 1000ms ease-out forwards;
 }
 
 /* Keeps the label above the fill layer. */
@@ -609,11 +667,63 @@ h2,
   animation: backdrop-in 220ms ease-out;
 }
 
+/* Confirmation checkmark: the circle draws, then the tick. Stroke lengths are
+   set to each path's measured length so dashoffset animates cleanly to zero. */
+@keyframes draw-stroke {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes check-pop {
+  from { transform: scale(0.9); }
+  to   { transform: scale(1); }
+}
+
+.check {
+  display: block;
+  width: 104px;
+  height: 104px;
+  margin: 0 auto 1.25rem;
+  animation: check-pop 500ms ease-out;
+}
+
+.check-circle,
+.check-mark {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.check-circle {
+  stroke: var(--color-forest);
+  stroke-width: 2;
+  /* circumference of r=24 is ~150.8 */
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: draw-stroke 700ms ease-out forwards;
+}
+
+.check-mark {
+  stroke: var(--color-orange);
+  stroke-width: 4;
+  /* the two tick segments measure ~33.9 combined */
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: draw-stroke 450ms ease-out 550ms forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .btn.is-adding::after,
   .modal[open],
-  .modal[open]::backdrop {
+  .modal[open]::backdrop,
+  .check {
     animation: none;
+  }
+
+  /* Skip the drawing, keep the drawn result. */
+  .check-circle,
+  .check-mark {
+    animation: none;
+    stroke-dashoffset: 0;
   }
 }
 
