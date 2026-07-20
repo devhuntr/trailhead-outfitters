@@ -31,15 +31,44 @@ Missing files are handled gracefully: the `<img>` is removed on load failure and
 the category text placeholder shows through. Until you add a photo you will see
 a 404 for it in the console, which is expected.
 
-## Preparing a photo
+## Workflow
 
-1. **Source.** [Unsplash](https://unsplash.com) and [Pexels](https://pexels.com)
-   are both free for commercial use with no attribution required.
-2. **Crop** to a 4:3 landscape ratio. Cards render at 400×300 and the images are
-   `object-fit: cover`, so anything else gets cropped at the edges.
-3. **Resize** to roughly 800px wide. A raw download is often 4000px and several
-   megabytes, which will drag down the Lighthouse performance score.
-4. **Compress** with [Squoosh](https://squoosh.app). Aim for under 150 KB each.
+1. **Download** a photo. [Unsplash](https://unsplash.com) and
+   [Pexels](https://pexels.com) are both free for commercial use with no
+   attribution required.
+2. **Save it into `raw-images/`**, named after the product id —
+   `raw-images/pack-summit-45.jpg`. That folder is git-ignored, so full-resolution
+   originals never bloat the repository.
+3. **Run the optimizer:**
+
+   ```bash
+   npm run images                    # everything in raw-images/
+   npm run images boot-ridgeline.jpg # just one
+   ```
+
+That writes an optimized copy to `public/images/`. A typical 4000×6000 download
+goes from around 2 MB to under 100 KB — roughly 96% smaller.
+
+The script caps the long edge at 900px, strips EXIF metadata (including GPS
+coordinates, which stock photos and phone shots often carry), and re-encodes as
+progressive JPEG at quality 82.
+
+It deliberately does **not** crop to a fixed ratio. The catalog uses
+`object-fit: cover`, so the browser crops for display, and cropping here as well
+would silently decapitate a portrait shot.
+
+### A note on portrait photos
+
+Cards render 4:3 landscape. A tall portrait photo still works, but `cover` will
+show a horizontal band through the middle of it. If an important part of a
+product gets cut off, either crop the raw file to landscape before optimizing,
+or nudge the framing in CSS:
+
+```css
+.media-image { object-position: center 30%; }
+```
+
+Landscape source photos generally look best on the cards.
 
 ## Alt text
 
