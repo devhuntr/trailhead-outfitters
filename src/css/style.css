@@ -3,13 +3,44 @@
 :root {
   --color-forest: #1b3022; /* headers, footers, brand areas */
   --color-stone: #f5f3f0; /* main surface background */
-  --color-orange: #ff5a00; /* buttons and highlights */
+  --color-orange: #c74600; /* buttons and highlights - 4.88:1 on white */
   --color-canvas: #fbf9f6; /* page background */
   --color-charcoal: #242424; /* body text */
+  --color-error: #b3261e; /* form errors - 6.22:1 on canvas */
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Every interactive element eases between its colour states instead of
+   snapping. Colour-only, so this stays comfortable under reduced motion. */
+.site-nav a,
+.logo,
+.filter,
+.card-name a,
+.btn,
+.stepper button,
+.modal-close,
+.remove,
+.link,
+.summary-link {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+/* Cards lift slightly on hover to read as clickable. */
+.card {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(27, 48, 34, 0.16);
 }
 
 body {
@@ -31,7 +62,8 @@ body {
   flex: 1;
 }
 
-h2 {
+h2,
+.page h1 {
   font-family: 'Oswald', system-ui, sans-serif;
   font-weight: 600;
   font-size: 1.75rem;
@@ -39,6 +71,19 @@ h2 {
   letter-spacing: 0.03em;
   margin: 0 0 1rem;
   color: var(--color-forest);
+}
+
+/* Visible to screen readers only. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .page {
@@ -107,10 +152,22 @@ h2 {
 
 /* Hero */
 
+/* The photo is decorative, so it lives in CSS rather than an <img>. A dark
+   forest overlay sits on top so the text keeps ≥4.5:1 contrast wherever the
+   image happens to be light. The solid background-color is the fallback: if
+   hero.jpg ever fails to load, the overlay still lands on forest, so the light
+   text stays readable. */
 .hero {
-  padding: 4rem 1.5rem;
+  padding: 5rem 1.5rem;
   text-align: center;
-  background: var(--color-stone);
+  background-color: var(--color-forest);
+  background-image: linear-gradient(
+      rgba(20, 36, 26, 0.55),
+      rgba(20, 36, 26, 0.72)
+    ),
+    url('/images/hero.jpg');
+  background-size: cover;
+  background-position: center;
   border-bottom: 3px solid var(--color-forest);
 }
 
@@ -121,21 +178,56 @@ h2 {
   text-transform: uppercase;
   letter-spacing: 0.02em;
   margin: 0 0 0.5rem;
-  color: var(--color-forest);
+  color: var(--color-stone);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .hero p {
   margin: 0;
   font-size: 1.125rem;
+  color: var(--color-stone);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
-/* Filters */
+/* Search and filters */
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.search {
+  display: flex;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 420px;
+  padding: 0.7rem 0.9rem;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--color-charcoal);
+  background: #ffffff;
+  border: 2px solid var(--color-forest);
+}
+
+.search-input:focus {
+  outline: 2px solid var(--color-orange);
+  outline-offset: 1px;
+}
+
+.result-count {
+  margin: 0 0 1.5rem;
+  font-size: 0.9rem;
+  color: #4a4a4a;
+}
 
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 2rem;
 }
 
 .filter {
@@ -174,6 +266,22 @@ h2 {
   border: 2px solid var(--color-forest);
 }
 
+/* Product media: the photo lies on top of the text placeholder, so removing a
+   failed <img> reveals the placeholder with no extra state to manage. */
+.media {
+  position: relative;
+  overflow: hidden;
+}
+
+.media-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--color-stone);
+}
+
 .card-image,
 .detail-image,
 .cart-thumb {
@@ -185,7 +293,7 @@ h2 {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color-forest);
-  opacity: 0.55;
+  opacity: 0.8;
   text-decoration: none;
 }
 
@@ -257,6 +365,8 @@ h2 {
 /* Buttons */
 
 .btn {
+  position: relative;
+  overflow: hidden;
   margin-top: 0.75rem;
   width: 100%;
   padding: 0.75rem 1rem;
@@ -275,7 +385,8 @@ h2 {
 }
 
 .btn:disabled {
-  background: #c9c6c1;
+  background: #d8d5d1;
+  color: #3a3a3a;
   cursor: not-allowed;
 }
 
@@ -289,6 +400,13 @@ h2 {
   text-align: center;
   text-decoration: none;
   padding: 0.75rem 2rem;
+}
+
+/* Full-width card action that navigates instead of submitting. */
+.btn-card-link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
 }
 
 /* Product detail */
@@ -364,6 +482,16 @@ h2 {
   opacity: 0.75;
 }
 
+/* Specific enough to beat the `.cart-details p` rule above, which would
+   otherwise dim the size label with its 0.75 opacity. */
+.cart-details .cart-size {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-forest);
+  opacity: 1;
+}
+
 .stepper {
   display: flex;
   align-items: center;
@@ -431,10 +559,13 @@ h2 {
   gap: 1rem;
 }
 
-.order-form label {
+.field {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+
+.order-form label {
   font-weight: 600;
   font-size: 0.9rem;
 }
@@ -452,17 +583,71 @@ h2 {
   outline-offset: 1px;
 }
 
+/* Invalid fields are marked by colour, a thicker border, AND the message
+   below, so the state never depends on colour alone. */
+.order-form input[aria-invalid='true'] {
+  border-color: var(--color-error);
+  background: #fffafa;
+}
+
+.field-error {
+  margin: 0;
+  min-height: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-error);
+}
+
+.field-error:empty {
+  display: none;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
-.form-error {
-  color: #b3261e;
+/* Error summary */
+
+.form-summary {
+  padding: 1rem 1.25rem;
+  border: 2px solid var(--color-error);
+  background: #fdf4f3;
+}
+
+.form-summary:focus-visible {
+  outline: 2px solid var(--color-error);
+  outline-offset: 2px;
+}
+
+.form-summary-title {
+  margin: 0 0 0.5rem;
+  font-family: 'Oswald', system-ui, sans-serif;
+  font-size: 1.05rem;
   font-weight: 600;
+  color: var(--color-error);
+}
+
+.form-summary-list {
   margin: 0;
-  min-height: 1.2rem;
+  padding-left: 1.1rem;
+}
+
+.form-summary-list li {
+  margin: 0.25rem 0;
+}
+
+.summary-link {
+  padding: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  color: var(--color-error);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .order-summary {
@@ -497,6 +682,274 @@ h2 {
   text-align: center;
 }
 
+/* Animation */
+
+@keyframes fill-sweep {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes grid-refresh {
+  from { opacity: 0.35; }
+  to   { opacity: 1; }
+}
+
+@keyframes count-bump {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+/* The fill layer sweeps across the button while the item is added. */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-forest);
+  transform: scaleX(0);
+  transform-origin: left;
+  pointer-events: none;
+}
+
+.btn.is-adding::after {
+  animation: fill-sweep 1000ms ease-out forwards;
+}
+
+/* Keeps the label above the fill layer. */
+.btn-label {
+  position: relative;
+  z-index: 1;
+}
+
+/* Product cards stagger in on a full render (page load, category change).
+   The delay is capped so the last card is not left waiting. */
+.grid .card {
+  animation: card-in 320ms ease-out backwards;
+  animation-delay: calc(min(var(--index, 0), 8) * 45ms);
+}
+
+/* While typing in the search box the grid is swapped in place. A stagger on
+   every keystroke would be distracting, so the container flashes instead. */
+.grid.is-updating {
+  animation: grid-refresh 180ms ease-out;
+}
+
+.grid.is-updating .card {
+  animation: none;
+}
+
+#cart-count {
+  display: inline-block;
+}
+
+#cart-count.is-bumping {
+  animation: count-bump 400ms ease-out;
+}
+
+/* Confirmation checkmark: the circle draws, then the tick. Stroke lengths are
+   set to each path's measured length so dashoffset animates cleanly to zero. */
+@keyframes draw-stroke {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes check-pop {
+  from { transform: scale(0.9); }
+  to   { transform: scale(1); }
+}
+
+.check {
+  display: block;
+  width: 104px;
+  height: 104px;
+  margin: 0 auto 1.25rem;
+  animation: check-pop 500ms ease-out;
+}
+
+.check-circle,
+.check-mark {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.check-circle {
+  stroke: var(--color-forest);
+  stroke-width: 2;
+  /* circumference of r=24 is ~150.8 */
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: draw-stroke 700ms ease-out forwards;
+}
+
+.check-mark {
+  stroke: var(--color-orange);
+  stroke-width: 4;
+  /* the two tick segments measure ~33.9 combined */
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: draw-stroke 450ms ease-out 550ms forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Broad off-switch: no element eases or plays a keyframe. Colour still
+     changes on hover, the modal still appears and disappears, the cart count
+     still updates -- just without the motion between states. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* The checkmark is drawn with stroke-dashoffset, so zeroing the animation
+     alone would leave it invisible. Force it to its finished state. */
+  .check-circle,
+  .check-mark {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Size selector */
+
+.size-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 1rem 0;
+  max-width: 200px;
+}
+
+.size-field label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.size-field select {
+  padding: 0.7rem;
+  font-family: inherit;
+  font-size: 1rem;
+  border: 2px solid var(--color-forest);
+  background: #ffffff;
+  color: var(--color-charcoal);
+  cursor: pointer;
+}
+
+.size-field select:focus {
+  outline: 2px solid var(--color-orange);
+  outline-offset: 1px;
+}
+
+/* Modal */
+
+.modal {
+  width: min(900px, calc(100vw - 2rem));
+  /* Cap the height to the viewport and scroll inside, so a tall product (image
+     + specs + size + button) stays fully reachable on short and landscape
+     screens instead of spilling off the bottom. dvh accounts for mobile
+     browser chrome; the vh line is the fallback for browsers without dvh. */
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  padding: 2rem;
+  border: 2px solid var(--color-forest);
+  background: var(--color-canvas);
+  color: var(--color-charcoal);
+
+  /* Closed state. A <dialog> is set to display:none the moment close() fires,
+     so an exit animation needs `allow-discrete` to let the browser hold the
+     element around long enough to transition out. Without it the modal would
+     animate open and then vanish instantly. */
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  transition:
+    opacity 220ms ease-out,
+    transform 220ms ease-out,
+    overlay 220ms ease-out allow-discrete,
+    display 220ms ease-out allow-discrete;
+}
+
+.modal[open] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* The entry side: without this the dialog would start from its open state and
+   there would be nothing to animate from. */
+@starting-style {
+  .modal[open] {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+.modal::backdrop {
+  background: rgba(27, 48, 34, 0.55);
+  opacity: 0;
+  transition:
+    opacity 220ms ease-out,
+    overlay 220ms ease-out allow-discrete,
+    display 220ms ease-out allow-discrete;
+}
+
+.modal[open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  .modal[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+.modal .detail {
+  margin-top: 0.5rem;
+}
+
+.modal h1 {
+  font-family: 'Oswald', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 0 0.25rem;
+  color: var(--color-forest);
+}
+
+/* The modal itself scrolls, so a plain absolute close button would scroll out
+   of reach. Laying #modal-content out as a column lets the button sit in flow
+   and stay pinned to the top with position: sticky. */
+#modal-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-close {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  align-self: flex-end;
+  /* Pull it back into the padding corner it used to sit in. */
+  margin: -0.75rem -0.75rem 0 0;
+  width: 40px;
+  height: 40px;
+  font-size: 1.75rem;
+  line-height: 1;
+  background: none;
+  border: none;
+  color: var(--color-forest);
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: var(--color-orange);
+}
+
 /* Mobile */
 
 @media (max-width: 800px) {
@@ -507,6 +960,10 @@ h2 {
 
   .detail-image {
     height: 240px;
+  }
+
+  .modal {
+    padding: 1.5rem;
   }
 }
 
@@ -527,5 +984,13 @@ h2 {
 
   .btn-wide {
     max-width: 100%;
+  }
+}
+
+/* Short viewports, chiefly landscape phones: trim the modal image so the price
+   and Add to Cart sit near the top and the modal needs little or no scrolling. */
+@media (max-height: 520px) {
+  .modal .detail-image {
+    height: 160px;
   }
 }

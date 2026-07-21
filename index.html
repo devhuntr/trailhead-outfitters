@@ -15,10 +15,10 @@
   <body>
     <div id="app">
       <header class="site-header">
-        <a class="logo" href="#/">Trailhead Outfitters</a>
+        <a class="logo" href="/">Trailhead Outfitters</a>
         <nav class="site-nav">
-          <a href="#/">Shop</a>
-          <a href="#/cart">Cart (<span id="cart-count">0</span>)</a>
+          <a href="/">Shop</a>
+          <a href="?view=cart">Cart (<span id="cart-count">0</span>)</a>
         </nav>
       </header>
 
@@ -27,7 +27,14 @@
       <footer class="site-footer">
         <p>&copy; 2026 Trailhead Outfitters</p>
       </footer>
+
+      <p id="cart-announcer" class="visually-hidden" role="status" aria-live="polite"></p>
     </div>
+
+    <dialog id="product-modal" class="modal" aria-labelledby="modal-title">
+      <div id="modal-content"></div>
+    </dialog>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
