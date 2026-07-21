@@ -152,10 +152,22 @@ h2,
 
 /* Hero */
 
+/* The photo is decorative, so it lives in CSS rather than an <img>. A dark
+   forest overlay sits on top so the text keeps ≥4.5:1 contrast wherever the
+   image happens to be light. The solid background-color is the fallback: if
+   hero.jpg ever fails to load, the overlay still lands on forest, so the light
+   text stays readable. */
 .hero {
-  padding: 4rem 1.5rem;
+  padding: 5rem 1.5rem;
   text-align: center;
-  background: var(--color-stone);
+  background-color: var(--color-forest);
+  background-image: linear-gradient(
+      rgba(20, 36, 26, 0.55),
+      rgba(20, 36, 26, 0.72)
+    ),
+    url('/images/hero.jpg');
+  background-size: cover;
+  background-position: center;
   border-bottom: 3px solid var(--color-forest);
 }
 
@@ -166,12 +178,15 @@ h2,
   text-transform: uppercase;
   letter-spacing: 0.02em;
   margin: 0 0 0.5rem;
-  color: var(--color-forest);
+  color: var(--color-stone);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .hero p {
   margin: 0;
   font-size: 1.125rem;
+  color: var(--color-stone);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 /* Search and filters */
